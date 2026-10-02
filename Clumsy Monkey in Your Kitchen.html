@@ -1,0 +1,228 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Clumsy Monkey in Your Kitchen</title>
+<style>
+:root{--c:#00AEEF;--m:#EC008C;--y:#FFD93F;--k:#000;--bg:#00AEEF;--u:min(1vw,1vh);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0088bb}}
+:root[data-theme=dark]{--bg:#0088bb}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+body{margin:0;height:100%;background:var(--bg);font-family:"Baloo 2","Comic Sans MS","Chalkboard SE",system-ui,sans-serif;color:var(--k);overflow:hidden;touch-action:none}
+#app{height:100%;display:flex;flex-direction:column}
+.scr{display:none;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding:2vh 4vw;text-align:center;min-height:0}
+.scr.on{display:flex}
+h1{font-size:min(9vw,11vh);line-height:.95;margin:0;-webkit-text-stroke:min(1.6vw,1.6vh) var(--k);paint-order:stroke fill}
+h1 span:nth-child(3n+1){color:var(--y)}h1 span:nth-child(3n+2){color:var(--m)}h1 span:nth-child(3n){color:#fff}
+.big{font-size:min(14vw,22vh);animation:bob 2s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-2vh) rotate(6deg)}}
+button{font:inherit;font-weight:800;border:.7vmin solid var(--k);border-radius:4vmin;padding:1.4vh 5vw;font-size:min(6vw,6vh);cursor:pointer;box-shadow:0 1vmin 0 var(--k);color:var(--k)}
+button:active{transform:translateY(.8vmin);box-shadow:0 .2vmin 0 var(--k)}
+.play{background:var(--m);color:#fff;font-size:min(9vw,10vh);padding:1.5vh 8vw}
+.row{display:flex;gap:2vw;flex-wrap:wrap;justify-content:center}
+.card{background:var(--y);width:min(26vw,22vh);padding:1vh;font-size:min(4vw,3.6vh)}
+.card.lock{background:#fff;opacity:.8}
+.sm{font-size:min(4.5vw,4vh);background:#fff;padding:1vh 3vw}
+#hd{display:flex;align-items:center;gap:2vw;padding:1.2vh 3vw;background:var(--y);border-bottom:.7vmin solid var(--k)}
+#hd button{padding:.5vh 2.5vw;font-size:min(6vw,5vh);background:#fff}
+#say{flex:1;font-size:min(5vw,4.4vh);font-weight:800;line-height:1.1}
+#grp{font-size:min(3.4vw,2.8vh);background:var(--m);color:#fff;border-radius:3vmin;padding:.4vh 2vw;white-space:nowrap}
+#S{flex:1;position:relative;overflow:hidden;min-height:0;background:radial-gradient(circle at 50% 120%,#fff6 0,#0000 60%)}
+.it{position:absolute;transform:translate(-50%,-50%);line-height:1;touch-action:none;cursor:grab}
+.it.nopt{pointer-events:none}.it svg{width:1em;height:1em;display:block;pointer-events:none;overflow:visible}.big{display:flex;justify-content:center;align-items:center}.big svg{width:min(34vw,26vh);height:min(34vw,26vh)}.row svg{width:min(12vw,9vh);height:min(12vw,9vh)}.card svg{width:min(15vw,11vh);height:min(15vw,11vh);margin:0 auto .5vh;display:block}#mk svg{width:min(11vw,9vh);height:min(11vw,9vh);display:block}.fall svg{width:7vmin;height:7vmin}
+#S canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#bar{position:absolute;left:10%;right:10%;bottom:2vh;height:3vh;border:.6vmin solid var(--k);border-radius:3vh;background:#fff;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:var(--m);transition:width .1s}
+.tgt{opacity:.9;filter:drop-shadow(0 0 1.5vmin var(--y))}
+.pulse{animation:pl 1s infinite}@keyframes pl{50%{transform:translate(-50%,-50%) scale(1.15)}}
+#mk.hop{animation:hop .6s}@keyframes hop{40%{transform:translateY(-1.5vh) rotate(-15deg)}}
+.fall{position:fixed;top:-10vh;font-size:6vmin;animation:fl 3s linear forwards;pointer-events:none}@keyframes fl{to{transform:translateY(115vh) rotate(360deg)}}
+.panel{background:#fff;border:.7vmin solid var(--k);border-radius:4vmin;padding:2vh 4vw;max-width:560px;font-size:min(4vw,3.4vh)}
+.panel b{color:var(--m)}
+</style></head><body><div id="app">
+<section class="scr on" id="menu">
+<div class="big" data-a="🐵,🍳"></div>
+<h1 id="ttl"></h1>
+<button class="play" id="go">PLAY</button>
+<div class="row"><button class="card" id="pk" data-a="🥞">Pancakes</button><button class="card" id="pz" data-a="🍕">Pizza</button><button class="card" id="ck2" data-a="🍪">Cookies</button></div>
+<div class="row"><button class="sm" id="mu">Music: ON</button><button class="sm" id="ga">Grown-ups</button></div>
+<div id="stars" style="font-size:min(5vw,4vh);font-weight:800"></div>
+</section>
+<section class="scr" id="game" style="padding:0;gap:0;justify-content:flex-start;align-items:stretch">
+<div id="hd"><button id="hm">Home</button><span id="mk" data-a="🐵"></span><div id="say"></div><span id="grp"></span></div>
+<div id="S"></div></section>
+<section class="scr" id="win"><div class="big" data-a="🥞,🐵"></div><h1 id="wt"></h1><div class="row" data-a="⭐,⭐,⭐"></div>
+<div class="row"><button class="play" id="nx" style="background:var(--y)">NEXT LEVEL</button><button class="play" id="again">AGAIN</button><button class="sm" id="wm">Menu</button></div></section>
+<section class="scr" id="par"><div class="panel" id="pp"></div><button class="sm" id="pc">Back</button></section>
+</div>
+<script>
+const $=s=>document.querySelector(s),S=$('#S');
+let ac,mOn=true,mt,idx=0,steps=[],busy=0,gid=0,hI;
+// ---------- sound (jazz combo + soft effects) ----------
+let mG,sG,nb,bassB,keysB,pi=0,lp=0,nxt=0,bn=0;
+const m2f=n=>440*2**((n-69)/12),PE=[72,74,76,79,81,84].map(m2f);
+function nt(f,t,d,v,dest,ty='sine',h=0){if(!ac)return;const o=ac.createOscillator(),g=ac.createGain();o.type=ty;o.frequency.value=f;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(dest);o.start(t);o.stop(t+d+.05);
+if(h){const o2=ac.createOscillator(),g2=ac.createGain();o2.frequency.value=f*h;g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(v*.3,t+.005);g2.gain.exponentialRampToValueAtTime(.0001,t+d*.3);o2.connect(g2);g2.connect(dest);o2.start(t);o2.stop(t+d*.3+.05)}}
+function ns(t,d,v,ty,fc,dest){if(!ac)return;const s=ac.createBufferSource(),f=ac.createBiquadFilter(),g=ac.createGain();s.buffer=nb;f.type=ty;f.frequency.value=fc;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+d);s.connect(f);f.connect(g);g.connect(dest);s.start(t,Math.random()*.5);s.stop(t+d+.02)}
+const CH=[{b:[36,40,43,45],c:[59,62,64,67],s:[72,74,76,79,81,83]},{b:[33,37,40,43],c:[55,61,64,67],s:[69,71,73,76,79,81]},{b:[38,41,45,47],c:[60,64,65,69],s:[74,76,77,81,84]},{b:[43,47,50,48],c:[59,62,65,67],s:[67,71,74,77,79,83]}];
+function sched(){if(!ac||!mOn)return;while(nxt<ac.currentTime+.5){const c=CH[bn%4],Q=.56;
+for(let k=0;k<4;k++){const t=nxt+k*Q;nt(m2f(c.b[k]),t,Q*.95,.22,bassB,'triangle');ns(t,.06,.02,'highpass',7500,mG);if(k%2)ns(t+Q*.67,.06,.03,'highpass',7500,mG);
+if(Math.random()<.5)nt(m2f(c.s[Math.random()*c.s.length|0]),t+(Math.random()<.4?Q*.67:0),.8,.05,keysB,'sine',4)}
+[0,1.67].forEach(o=>c.c.forEach(n=>nt(m2f(n),nxt+o*Q,.4,.035,keysB,'sine',3)));nxt+=4*Q;bn++}}
+function music(){clearInterval(mt);if(!ac)return;mG.gain.value=mOn?.5:0;if(!mOn)return;nxt=ac.currentTime+.1;mt=setInterval(sched,150);sched()}
+function wake(){if(!ac){try{ac=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+mG=ac.createGain();sG=ac.createGain();sG.gain.value=.9;mG.connect(ac.destination);sG.connect(ac.destination);
+nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+bassB=ac.createBiquadFilter();bassB.type='lowpass';bassB.frequency.value=380;bassB.connect(mG);
+keysB=ac.createBiquadFilter();keysB.type='lowpass';keysB.frequency.value=2400;keysB.connect(mG);
+const dl=ac.createDelay(),fb=ac.createGain();dl.delayTime.value=.22;fb.gain.value=.28;keysB.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(mG);music()}
+if(ac.state=='suspended')ac.resume()}
+function pop(){if(!ac)return;const t=ac.currentTime;if(t-lp<.07)return;lp=t;nt(PE[pi++%6],t,.25,.09,sG,'sine',4)}
+const ok=()=>{if(!ac)return;const t=ac.currentTime;nt(m2f(79),t,.5,.1,sG,'sine',4);nt(m2f(84),t+.12,.8,.1,sG,'sine',4)},
+bad=()=>{if(ac)nt(m2f(50),ac.currentTime,.2,.1,sG)},
+crackS=()=>{if(!ac)return;const t=ac.currentTime;ns(t,.07,.25,'bandpass',2200,sG);nt(140,t,.12,.15,sG)},
+pour=()=>{if(ac)ns(ac.currentTime,.16,.06,'bandpass',900,sG)},
+swsh=b=>{if(ac)ns(ac.currentTime,b?.4:.15,.05,'bandpass',b?1800:2600,sG)},
+beep=()=>{if(!ac)return;const t=ac.currentTime;nt(m2f(91),t,.09,.07,sG);nt(m2f(91),t+.12,.09,.07,sG)};
+function fan(){if(!ac)return;const t=ac.currentTime+.1;[72,76,79,81,84].forEach((n,i)=>nt(m2f(n),t+i*.11,.6,.11,sG,'sine',4));[72,76,79,81,86].forEach(n=>nt(m2f(n),t+.7,2,.08,sG,'sine',3));[48,55].forEach(n=>nt(m2f(n),t+.7,1.8,.15,sG,'triangle'));ns(t+.7,1.2,.07,'highpass',5000,sG);for(let i=0;i<45;i++)ns(t+.9+Math.random()*1.8,.03,.08,'bandpass',1800+Math.random()*3500,sG)}
+function duck(){if(!ac)return;mG.gain.setTargetAtTime(.12,ac.currentTime,.1);setTimeout(()=>{if(ac)mG.gain.setTargetAtTime(mOn?.5:0,ac.currentTime,.4)},4000)}
+document.addEventListener('pointerdown',wake);
+// ---------- illustrations (SVG) ----------
+const sv=b=>`<svg viewBox="0 0 100 100" stroke="#000" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">${b}</svg>`;
+const disc=y=>`<path d="M12 ${y}v10A38 14 0 0 0 88 ${y+10}V${y}Z" fill="#C9791F"/><ellipse cx="50" cy="${y}" rx="38" ry="14" fill="#E8A64F"/>`;
+const pz=n=>sv('<circle cx="50" cy="50" r="44" fill="#E8A64F"/><circle cx="50" cy="50" r="36" fill="'+(n?'#E53935':'#F1D9A8')+'" stroke-width="2"/>'+(n>1?'<circle cx="50" cy="50" r="31" fill="#FFD93F" stroke="none" opacity=".9"/>':'')+(n>2?[[38,38],[62,40],[50,62],[34,58],[66,60]].map(q=>`<circle cx="${q[0]}" cy="${q[1]}" r="7" fill="#C4122F" stroke-width="2.5"/>`).join(''):''));
+const ART={
+'🐵':sv('<circle cx="16" cy="58" r="11" fill="#8B5A2B"/><circle cx="84" cy="58" r="11" fill="#8B5A2B"/><circle cx="50" cy="60" r="32" fill="#8B5A2B"/><ellipse cx="50" cy="68" rx="22" ry="17" fill="#F5C9A0"/><circle cx="40" cy="55" r="4.5" fill="#000" stroke="none"/><circle cx="60" cy="55" r="4.5" fill="#000" stroke="none"/><circle cx="46" cy="65" r="2" fill="#000" stroke="none"/><circle cx="54" cy="65" r="2" fill="#000" stroke="none"/><path d="M40 73Q50 82 60 73" fill="none" stroke-width="3"/><path d="M30 30Q18 8 38 13Q50-1 62 13Q82 8 70 30Z" fill="#fff"/><rect x="30" y="27" width="40" height="11" rx="4" fill="#fff"/>'),
+'🥚':sv('<path d="M50 14C72 14 82 44 82 62A32 28 0 0 1 18 62C18 44 28 14 50 14Z" fill="#FFF3D6"/><path d="M34 40Q38 28 46 24" fill="none" stroke="#fff" stroke-width="5"/>'),
+'crack':sv('<path d="M14 58Q10 30 38 34Q50 14 68 34Q92 36 86 60Q80 84 52 80Q20 86 14 58Z" fill="#fff"/><circle cx="50" cy="56" r="14" fill="#FFD93F"/>'),
+'🥛':sv('<path d="M28 34H72V92H28Z" fill="#fff"/><path d="M28 34L50 10L72 34Z" fill="#fff"/><rect x="28" y="52" width="44" height="26" fill="#00AEEF"/><circle cx="42" cy="65" r="5" fill="#fff" stroke="none"/><circle cx="58" cy="65" r="5" fill="#fff" stroke="none"/>'),
+'🌾':sv('<path d="M24 36Q50 26 76 36L82 88Q50 98 18 88Z" fill="#F3E3C3"/><path d="M30 36L38 16H62L70 36Z" fill="#F3E3C3"/><circle cx="50" cy="64" r="15" fill="#FFD93F"/><text x="50" y="71" text-anchor="middle" font-size="20" font-weight="900" stroke="none" fill="#000" font-family="sans-serif">F</text>'),
+'🍯':sv('<rect x="40" y="22" width="20" height="18" fill="#D9822B"/><rect x="34" y="10" width="32" height="14" rx="4" fill="#EC008C"/><rect x="26" y="38" width="48" height="54" rx="12" fill="#D9822B"/><rect x="33" y="56" width="34" height="22" rx="4" fill="#FFD93F"/>'),
+'🥄':sv('<rect x="45" y="44" width="10" height="50" rx="5" fill="#C98A4B"/><ellipse cx="50" cy="28" rx="20" ry="24" fill="#C98A4B"/><ellipse cx="50" cy="28" rx="13" ry="17" fill="#A86A2E" stroke-width="2"/>'),
+'🥣':sv('<path d="M8 48H92Q92 92 50 92Q8 92 8 48Z" fill="#00AEEF"/><ellipse cx="50" cy="48" rx="42" ry="10" fill="#7FD6F7"/><ellipse cx="50" cy="48" rx="34" ry="6" fill="#FFF3D6" stroke-width="2"/>'),
+'🍳':sv('<rect x="66" y="44" width="32" height="14" rx="6" fill="#EC008C"/><circle cx="42" cy="52" r="34" fill="#444"/><circle cx="42" cy="52" r="25" fill="#666" stroke-width="2"/>'),
+'🔥':sv('<path d="M50 6Q72 30 78 54Q84 86 50 94Q16 86 22 54Q26 38 38 24Q40 40 50 44Q58 28 50 6Z" fill="#EC008C"/><path d="M50 50Q64 66 62 78Q58 90 50 90Q40 90 38 78Q38 64 50 50Z" fill="#FFD93F"/>'),
+'🥞':sv(disc(62)+disc(48)+disc(34)+'<rect x="42" y="22" width="16" height="10" rx="2" fill="#FFD93F" stroke-width="3"/>'),
+'🍽':sv('<circle cx="50" cy="50" r="44" fill="#fff"/><circle cx="50" cy="50" r="30" fill="#E6F6FD" stroke-width="2"/>'),
+'📟':sv('<rect x="12" y="34" width="76" height="46" rx="8" fill="#333"/><rect x="20" y="42" width="60" height="14" rx="3" fill="#00AEEF" stroke-width="2"/><rect x="20" y="62" width="60" height="8" rx="4" fill="#EC008C" stroke="none"/>'),
+'📶':sv('<path d="M14 50H86" stroke="#EC008C" stroke-width="10" stroke-dasharray="12 10"/>'),
+'✅':sv('<circle cx="50" cy="50" r="40" fill="#FFD93F"/><path d="M28 52L44 68L74 34" fill="none" stroke-width="9"/>'),
+'🟡':sv('<circle cx="50" cy="50" r="40" fill="#FFE9A8"/>'),
+'⭐':sv('<path d="M50 8L62 36L92 38L68 58L76 90L50 72L24 90L32 58L8 38L38 36Z" fill="#FFD93F"/>'),
+'🍌':sv('<path d="M16 30Q20 74 70 84Q84 84 88 70Q60 70 40 52Q30 40 34 22Z" fill="#FFD93F"/>'),
+'🧈':sv('<path d="M10 44L26 28H90V62L74 78H10Z" fill="#FFE57A"/><path d="M10 44H74V78M74 44L90 28" fill="none" stroke-width="3"/><rect x="22" y="54" width="38" height="12" rx="3" fill="#00AEEF" stroke="none"/>'),
+'🍫':sv('<rect x="22" y="8" width="56" height="84" rx="8" fill="#6B3A1E"/><path d="M22 36H78M22 64H78M50 8V92" fill="none" stroke-width="3"/>'),
+'dough':sv('<circle cx="50" cy="52" r="36" fill="#F1D9A8"/><circle cx="38" cy="42" r="5" fill="#6B3A1E" stroke="none"/><circle cx="60" cy="38" r="5" fill="#6B3A1E" stroke="none"/><circle cx="56" cy="62" r="5" fill="#6B3A1E" stroke="none"/><circle cx="36" cy="64" r="4" fill="#6B3A1E" stroke="none"/>'),
+'tray':sv('<rect x="6" y="40" width="88" height="40" rx="8" fill="#9AA5AD"/><rect x="14" y="48" width="72" height="24" rx="5" fill="#C9D1D6" stroke-width="2"/>'),
+'oven':sv('<rect x="10" y="16" width="80" height="76" rx="10" fill="#EC008C"/><rect x="20" y="36" width="60" height="42" rx="6" fill="#222"/><rect x="26" y="42" width="48" height="30" rx="4" fill="#FFD93F" stroke-width="2"/><circle cx="30" cy="26" r="4" fill="#fff"/><circle cx="46" cy="26" r="4" fill="#fff"/><circle cx="62" cy="26" r="4" fill="#fff"/>'),
+'🍅':sv('<circle cx="50" cy="56" r="34" fill="#E53935"/><path d="M50 24L42 14M50 24L58 12M50 24L36 28M50 24L64 28" stroke="#3BB54A" stroke-width="7" fill="none"/>'),
+'🧀':sv('<path d="M8 74L60 22L92 40V74Z" fill="#FFD93F"/><circle cx="60" cy="56" r="6" fill="#F5B800" stroke-width="3"/><circle cx="36" cy="64" r="4" fill="#F5B800" stroke-width="3"/><circle cx="78" cy="62" r="4" fill="#F5B800" stroke-width="3"/>'),
+'pep':sv('<circle cx="50" cy="50" r="38" fill="#C4122F"/><circle cx="38" cy="40" r="5" fill="#F7A8B8" stroke="none"/><circle cx="60" cy="46" r="5" fill="#F7A8B8" stroke="none"/><circle cx="46" cy="62" r="5" fill="#F7A8B8" stroke="none"/>'),
+'pdough':sv('<circle cx="50" cy="52" r="38" fill="#F1D9A8"/><path d="M30 44Q50 32 70 44" fill="none" stroke-width="2"/>'),
+'base0':pz(0),'base1':pz(1),'base2':pz(2),'pizzaw':pz(3),
+'🍕':sv('<path d="M50 92L10 24Q50 4 90 24Z" fill="#FFD93F"/><path d="M10 24Q50 4 90 24" fill="none" stroke="#C9791F" stroke-width="9"/><circle cx="40" cy="38" r="6" fill="#EC008C" stroke-width="3"/><circle cx="60" cy="40" r="6" fill="#EC008C" stroke-width="3"/><circle cx="50" cy="62" r="6" fill="#EC008C" stroke-width="3"/>'),
+'🍪':sv('<circle cx="50" cy="50" r="40" fill="#C98A4B"/><circle cx="36" cy="38" r="5" fill="#000" stroke="none"/><circle cx="62" cy="34" r="5" fill="#000" stroke="none"/><circle cx="56" cy="60" r="5" fill="#000" stroke="none"/><circle cx="34" cy="64" r="5" fill="#000" stroke="none"/>')};
+const G=k=>ART[String(k).replace(/\uFE0F/g,'')],art=(d,k)=>{const a=G(k);if(a)d.innerHTML=a;else d.textContent=k};
+document.querySelectorAll('[data-a]').forEach(n=>n.insertAdjacentHTML('afterbegin',n.dataset.a.split(',').map(G).join('')));
+// ---------- helpers ----------
+const show=id=>{document.querySelectorAll('.scr').forEach(s=>s.classList.toggle('on',s.id==id))};
+$('#ttl').innerHTML='Clumsy Monkey in Your Kitchen'.split('').map(c=>c==' '?' ':`<span>${c}</span>`).join('');
+const stars=()=>{let n=0;try{n=+localStorage.getItem('cmk')||0}catch(e){}$('#stars').textContent=n?'Dishes cooked: '+n:''};stars();
+function el(e,x,y,s,cls=''){const d=document.createElement('div');d.className='it '+cls;art(d,e);d.style.left=x+'%';d.style.top=y+'%';d.style.fontSize=`calc(var(--u)*${s})`;S.appendChild(d);return d}
+const pt=e=>{const r=S.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+const bar=p=>{let b=$('#bar');if(!b){S.insertAdjacentHTML('beforeend','<div id="bar"><i></i></div>');b=$('#bar')}b.firstChild.style.width=Math.min(100,p*100)+'%'};
+function done(){if(busy)return;busy=1;const g=gid;ok();const m=$('#mk');m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>{if(g!=gid)return;idx++;busy=0;step()},900)}
+// ---------- shapes (return px points) ----------
+const lerp=(a,n=10)=>{const o=[];for(let i=0;i<a.length-1;i++)for(let j=0;j<n;j++)o.push([a[i][0]+(a[i+1][0]-a[i][0])*j/n,a[i][1]+(a[i+1][1]-a[i][1])*j/n]);o.push(a[a.length-1]);return o};
+const poly=a=>(W,H)=>{const s=Math.min(W,H)*.62;return lerp(a).map(p=>[W/2+(p[0]-.5)*s,H/2+(p[1]-.5)*s])};
+const cut=poly([[0,.5],[1,.5]]),dia=poly([[.5,.05],[.95,.5],[.5,.95],[.05,.5],[.5,.05]]),box=poly([[.2,.1],[.8,.1],[.8,.9],[.2,.9],[.2,.1]]),tri=poly([[.5,.05],[.95,.9],[.05,.9],[.5,.05]]);
+const ell=(rx,ry)=>(W,H)=>{const s=Math.min(W,H),o=[];for(let i=0;i<=48;i++){const a=i/48*6.283-1.571;o.push([W/2+Math.cos(a)*s*rx,H/2+Math.sin(a)*s*ry])}return o};
+const circle=ell(.3,.3),oval=ell(.2,.3);
+const wave=(W,H)=>{const o=[];for(let i=0;i<=40;i++){const t=i/40;o.push([W*(.12+.76*t),H*.5+Math.sin(t*18.85)*H*.14])}return o};
+// ---------- recipe data (add new foods here) ----------
+const RECIPES={pancakes:{name:'Pancakes',e:'🥞',steps:[
+{g:'Grocery List',t:'trace',say:'Trace the egg!',w:'EGGS 🥚',gen:oval},
+{g:'Grocery List',t:'trace',say:'Trace the milk!',w:'MILK 🥛',gen:box},
+{g:'Grocery List',t:'trace',say:'Trace the flour!',w:'FLOUR 🌾',gen:tri},
+{g:'Shopping',t:'scan',say:'Slide each item to the scanner!',items:['🌾','🥚','🥛','🍯']},
+{g:'Cooking',t:'drag',say:'Scoop the flour into the bowl!',a:'🥄',from:[20,72],to:[72,45],tg:'🥣',bg:'🌾',bgp:[20,82]},
+{g:'Cooking',t:'swipe',say:'Level the flour! Swipe side to side!',e:'🥣',n:5},
+{g:'Cooking',t:'tap',say:'Tap the egg to crack it!',e:'🥚',n:3,end:'crack'},
+{g:'Cooking',t:'trace',say:'Stir! Trace a circle!',w:'',bg:'🥣',gen:circle},
+{g:'Cooking',t:'hold',say:'Pinch & hold to pour the batter!',e:'🥣',f:'🍳'},
+{g:'Cooking',t:'trace',say:'Light the fire! Trace the flames!',bg:'🍳',gen:wave,w:'FIRE 🔥'},
+{g:'Cooking',t:'flip',say:'Swipe UP to flip the pancake!',e:'🥞'},
+{g:'Serving',t:'drag',say:'Pour the syrup!',a:'🍯',from:[22,30],to:[50,60],tg:'🥞',bg:'🥞',bgp:[50,60]},
+{g:'Serving',t:'drag',say:'Serve the pancake!',a:'🥞',from:[25,55],to:[75,55],tg:'🍽️',bgp:[75,55]}]},cookies:{name:'Cookies',e:'🍪',steps:[
+{g:'Grocery List',t:'trace',say:'Trace the butter!',w:'BUTTER 🧈',gen:box},
+{g:'Grocery List',t:'trace',say:'Trace the eggs!',w:'EGGS 🥚',gen:oval},
+{g:'Grocery List',t:'trace',say:'Trace the chocolate!',w:'CHOCOLATE 🍫',gen:dia},
+{g:'Shopping',t:'scan',say:'Slide each item to the scanner!',items:['🧈','🥚','🍫','🌾']},
+{g:'Cooking',t:'drag',say:'Scoop the flour into the bowl!',a:'🥄',from:[20,72],to:[72,45],tg:'🥣',bg:'🌾',bgp:[20,82]},
+{g:'Cooking',t:'drag',say:'Add the butter!',a:'🧈',from:[20,30],to:[72,55],tg:'🥣'},
+{g:'Cooking',t:'tap',say:'Tap the egg to crack it!',e:'🥚',n:3,end:'crack'},
+{g:'Cooking',t:'drag',say:'Add the chocolate!',a:'🍫',from:[20,35],to:[72,55],tg:'🥣'},
+{g:'Cooking',t:'trace',say:'Stir! Trace a circle!',w:'',bg:'🥣',gen:circle},
+{g:'Cooking',t:'swipe',say:'Roll the dough! Swipe side to side!',e:'dough',n:5},
+{g:'Cooking',t:'drag',say:'Put the dough on the tray!',a:'dough',from:[22,45],to:[72,58],tg:'tray'},
+{g:'Baking',t:'trace',say:'Heat up the oven! Trace the waves!',bg:'oven',gen:wave,w:'HEAT 🔥'},
+{g:'Baking',t:'tap',say:'Tap the oven to bake!',e:'oven',n:3,end:'oven'},
+{g:'Serving',t:'drag',say:'Serve the cookies!',a:'🍪',from:[25,55],to:[75,55],tg:'🍽️',bgp:[75,55]}]},pizza:{name:'Pizza',e:'🍕',steps:[
+{g:'Grocery List',t:'trace',say:'Trace the tomato!',w:'TOMATO 🍅',gen:oval},
+{g:'Grocery List',t:'trace',say:'Trace the cheese!',w:'CHEESE 🧀',gen:tri},
+{g:'Grocery List',t:'trace',say:'Trace the pepperoni!',w:'PEPPERONI pep',gen:circle},
+{g:'Shopping',t:'scan',say:'Slide each item to the scanner!',items:['🌾','🍅','🧀','pep']},
+{g:'Cooking',t:'drag',say:'Scoop the flour into the bowl!',a:'🥄',from:[20,72],to:[72,45],tg:'🥣',bg:'🌾',bgp:[20,82]},
+{g:'Cooking',t:'swipe',say:'Knead the dough! Swipe side to side!',e:'pdough',n:5},
+{g:'Cooking',t:'trace',say:'Roll it flat! Trace a circle!',w:'',bg:'pdough',gen:circle},
+{g:'Cooking',t:'drag',say:'Add the tomato sauce!',a:'🍅',from:[20,30],to:[68,55],tg:'base0'},
+{g:'Cooking',t:'drag',say:'Sprinkle the cheese!',a:'🧀',from:[20,30],to:[68,55],tg:'base1'},
+{g:'Cooking',t:'drag',say:'Add the pepperoni!',a:'pep',from:[20,30],to:[68,55],tg:'base2'},
+{g:'Baking',t:'trace',say:'Heat up the oven! Trace the waves!',bg:'oven',gen:wave,w:'HEAT 🔥'},
+{g:'Baking',t:'tap',say:'Tap the oven to bake!',e:'oven',n:3,end:'oven'},
+{g:'Serving',t:'trace',say:'Cut the pizza! Trace the line!',w:'CUT',bg:'pizzaw',gen:cut},
+{g:'Serving',t:'drag',say:'Serve the pizza!',a:'pizzaw',from:[25,55],to:[75,55],tg:'🍽️',bgp:[75,55]}]}};
+// ---------- step engine ----------
+function step(){pi=0;clearInterval(hI);S.innerHTML='';S.onpointerdown=S.onpointermove=S.onpointerup=S.onpointercancel=null;const s=steps[idx];if(!s)return win();
+$('#say').textContent=s.say;$('#grp').textContent=s.g+' '+(idx+1)+'/'+steps.length;
+({trace,scan,drag:dragS,swipe,tap,hold,flip})[s.t](s)}
+function trace(s){if(s.bg)el(s.bg,50,50,38,'nopt').style.opacity=.4;
+if(s.w){const[wd,ic]=s.w.split(' '),l=el('',50,11,9,'nopt');l.style.cssText+=';display:flex;align-items:center;gap:.2em';l.innerHTML=`<b style="font-size:.8em;color:#fff;-webkit-text-stroke:.14em #000;paint-order:stroke fill">${wd}</b>${G(ic)||''}`}
+const c=document.createElement('canvas'),r=S.getBoundingClientRect(),W=c.width=r.width,H=c.height=r.height;S.appendChild(c);
+const x=c.getContext('2d'),P=s.gen(W,H),tol=Math.max(42,Math.min(W,H)*.09);let i=0,dn=0;
+const path=(a,b)=>{x.beginPath();a.slice(0,b).forEach((p,k)=>k?x.lineTo(p[0],p[1]):x.moveTo(p[0],p[1]));x.stroke()};
+function draw(){x.clearRect(0,0,W,H);x.lineCap=x.lineJoin='round';x.lineWidth=tol*.9;x.strokeStyle='#000';x.globalAlpha=.25;path(P,P.length);x.globalAlpha=1;x.setLineDash([tol*.5,tol*.5]);x.lineWidth=tol*.45;x.strokeStyle='#fff';path(P,P.length);x.setLineDash([]);
+if(i>1){x.lineWidth=tol*.7;x.strokeStyle='#000';path(P,i+1);x.lineWidth=tol*.5;x.strokeStyle='#EC008C';path(P,i+1)}
+const q=P[Math.min(i,P.length-1)];x.beginPath();x.arc(q[0],q[1],tol*.55,0,6.3);x.fillStyle='#FFD93F';x.fill();x.lineWidth=5;x.strokeStyle='#000';x.stroke()}
+draw();let down=0;c.onpointerdown=e=>{down=1;c.setPointerCapture(e.pointerId)};c.onpointerup=()=>down=0;
+c.onpointermove=e=>{if(!down||dn)return;const[px,py]=pt(e);for(let k=i;k<Math.min(i+4,P.length);k++)if(Math.hypot(P[k][0]-px,P[k][1]-py)<tol){if(k>=i){i=k;if(k%4==0)pop()}}
+draw();if(i>=P.length-1){dn=1;done()}}}
+function mkdrag(d,tg,fn){const ox=d.style.left,oy=d.style.top;let on=0;d.onpointerdown=e=>{on=1;d.setPointerCapture(e.pointerId);d.style.zIndex=9;d.classList.remove('pulse')};
+d.onpointermove=e=>{if(!on)return;const[px,py]=pt(e);d.style.left=px+'px';d.style.top=py+'px'};
+d.onpointerup=()=>{if(!on)return;on=0;const a=d.getBoundingClientRect(),b=tg.getBoundingClientRect();
+if(Math.hypot(a.x+a.width/2-b.x-b.width/2,a.y+a.height/2-b.y-b.height/2)<Math.max(b.width,b.height)*.75){d.style.zIndex=1;fn(d)}else{d.style.left=ox;d.style.top=oy;d.style.zIndex=1;bad()}}}
+function dragS(s){if(s.bg&&s.bgp)el(s.bg,...s.bgp,16,'nopt');const t=el(s.tg,...s.to,s.tg=='🍽️'?26:24,'nopt tgt');
+const d=el(s.a,...s.from,17,'pulse');mkdrag(d,t,x=>{x.style.left=t.style.left;x.style.top=t.style.top;x.style.transform='translate(-50%,-50%) scale(.8)';done()})}
+function scan(s){const sc=el('📟',82,50,22,'nopt tgt');el('📶',82,28,10,'nopt');let n=0;
+s.items.forEach((e,k)=>{const d=el(e,16,18+k*21,15,'pulse');mkdrag(d,sc,x=>{beep();x.remove();el('✅',82,50,12,'nopt chk');if(++n==s.items.length)done();else setTimeout(()=>{S.querySelectorAll('.chk').forEach(q=>q.remove())},400)})})}
+function swipe(s){const it=el(s.e,50,50,34,'nopt');let lx=null,tot=0;const need=s.n*140;bar(0);
+S.onpointerdown=e=>lx=pt(e)[0];S.onpointerup=()=>lx=null;
+S.onpointermove=e=>{if(lx==null||busy)return;const x=pt(e)[0],dx=Math.abs(x-lx);lx=x;const o=tot;tot+=dx;it.style.transform=`translate(-50%,-50%) rotate(${Math.sin(tot/30)*8}deg)`;if((o/70|0)!=(tot/70|0))swsh();bar(tot/need);if(tot>=need)done()}}
+function tap(s){let n=0;const it=el(s.e,50,50,34,'pulse');bar(0);it.onpointerdown=()=>{n++;crackS();it.style.fontSize=`calc(var(--u)*${34+n*3})`;bar(n/s.n);if(n>=s.n){art(it,s.end);it.classList.remove('pulse');done()}}}
+function hold(s){const b=el(s.e,50,22,26,'nopt'),p=el(s.f,50,72,32,'nopt'),bat=el('🟡',50,72,6,'nopt');bat.style.opacity=0;let v=0,h=null;bar(0);
+S.onpointerdown=()=>{if(h||busy)return;b.style.transform='translate(-50%,-50%) rotate(-35deg)';bat.style.opacity=1;h=hI=setInterval(()=>{v+=50;if(v%150==0)pour();bar(v/2200);bat.style.fontSize=`calc(var(--u)*${6+v/90})`;if(v>=2200){clearInterval(h);done()}},50)};
+S.onpointerup=S.onpointercancel=()=>{clearInterval(h);h=null;b.style.transform='translate(-50%,-50%)'}}
+function flip(s){const it=el(s.e,50,70,30,'');let y0=null;it.onpointerdown=e=>{y0=pt(e)[1];it.setPointerCapture(e.pointerId)};
+it.onpointerup=e=>{if(y0==null)return;if(y0-pt(e)[1]>70){it.style.transition='all .7s';it.style.top='20%';it.style.transform='translate(-50%,-50%) rotate(540deg)';swsh(1);setTimeout(()=>{it.style.top='70%';it.style.transform='translate(-50%,-50%) rotate(720deg)'},500);done()}y0=null}}
+function win(){fan();duck();let n=0;try{n=+localStorage.getItem('cmk')||0;localStorage.setItem('cmk',n+1)}catch(e){}stars();
+$('#wt').textContent='Yummy! '+RECIPES[cur].name+' done!';$('#nx').style.display=ORDER[ORDER.indexOf(cur)+1]?'':'none';show('win');for(let i=0;i<24;i++){const f=document.createElement('div');f.className='fall';f.innerHTML=G(['⭐','🍌','🥞'][i%3]);f.style.left=Math.random()*95+'vw';f.style.animationDelay=Math.random()*1.5+'s';document.body.appendChild(f);setTimeout(()=>f.remove(),5000)}}
+const ORDER=['pancakes','cookies','pizza'];let cur='pancakes';
+function start(k){wake();cur=k;steps=RECIPES[k].steps;idx=0;busy=0;gid++;show('game');step()}
+// ---------- menu + grown-ups ----------
+$('#go').onclick=$('#pk').onclick=()=>start('pancakes');$('#again').onclick=()=>start(cur);$('#nx').onclick=()=>start(ORDER[ORDER.indexOf(cur)+1]);$('#ck2').onclick=()=>start('cookies');$('#pz').onclick=()=>start('pizza');
+$('#hm').onclick=$('#wm').onclick=()=>{gid++;busy=0;clearInterval(hI);show('menu');stars()};
+$('#mu').onclick=()=>{wake();mOn=!mOn;$('#mu').textContent='Music: '+(mOn?'ON':'OFF');music()};
+$('#pc').onclick=()=>show('menu');
+$('#ga').onclick=()=>{const a=6+Math.random()*4|0,b=3+Math.random()*5|0;show('par');
+$('#pp').innerHTML=`<b>Grown-ups only</b><br>What is ${a} + ${b}? <input id="ans" inputmode="numeric" style="width:4em;font:inherit;border:.5vmin solid #000;border-radius:2vmin;text-align:center"> <button class="sm" id="ck" style="padding:.5vh 2vw">OK</button>`;
+$('#ck').onclick=()=>{if(+$('#ans').value==a+b)$('#pp').innerHTML=`<b>Chef Pass (parents)</b><br>Unlock new recipe packs (pizza, cookies, more) with a monthly or one-time purchase. Kids never see ads, pop-ups, or links; purchases live only behind this gate.<br><br><button class="sm" style="background:var(--y)" onclick="alert('Connect Stripe / App Store / Google Play billing here.')">Get Chef Pass</button><br><small>Playing needs no account and collects no personal data.</small>`;else $('#ans').value=''}}
+</script></body></html>
