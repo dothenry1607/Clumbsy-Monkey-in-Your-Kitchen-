@@ -21,6 +21,18 @@ eggCrack2Image.src = 'egg_crack_2.png';
 const eggCrackFinalImage = new Image();
 eggCrackFinalImage.src = 'egg_crack.png';
 
+const emptyBowlImage = new Image();
+emptyBowlImage.src = 'empty_bowl.png';
+
+const filledBowlImage = new Image();
+filledBowlImage.src = 'bowl.png';
+
+const bowlTopDownImage = new Image();
+bowlTopDownImage.src = 'bowl_topdown.png';
+
+const whiskImage = new Image();
+whiskImage.src = 'whisk.png';
+
 const kitchenBackground = new Image();
 kitchenBackground.src = 'kitchen.jpg';
 
@@ -41,6 +53,7 @@ peelPingSound.volume = 0.7;
 const W = canvas.width;
 const H = canvas.height;
 const centerX = W / 2;
+canvas.style.touchAction = 'none';
 
 const state = {
   screen: 'title',
@@ -81,6 +94,53 @@ const state = {
     height: 420,
     crackLevel: 0,
     cracked: false,
+  },
+  bowlStage: {
+    egg: {
+      x: 260,
+      y: 220,
+      width: 220,
+      height: 220,
+      dragging: false,
+      offsetX: 0,
+      offsetY: 0,
+    },
+    bowl: {
+      x: centerX - 180,
+      y: 430,
+      width: 360,
+      height: 240,
+    },
+    decorativeEgg: {
+      x: centerX + 220,
+      y: 170,
+      width: 220,
+      height: 220,
+    },
+    complete: false,
+  },
+  whiskStage: {
+    bowl: {
+      x: centerX - 220,
+      y: 180,
+      width: 440,
+      height: 300,
+    },
+    whisk: {
+      x: 120,
+      y: 300,
+      width: 200,
+      height: 180,
+      dragging: false,
+      offsetX: 0,
+      offsetY: 0,
+      lastX: 0,
+      lastY: 0,
+      lastAngle: 0,
+    },
+    progress: 0,
+    requiredProgress: 180,
+    complete: false,
   },
 };
 
@@ -186,6 +246,10 @@ function drawGreenGuideCircle(x, y, radius, alpha = 0.2) {
 function isInsideEgg(x, y) {
   const egg = state.egg;
   return x >= egg.x && x <= egg.x + egg.width && y >= egg.y && y <= egg.y + egg.height;
+}
+
+function isInsideRect(x, y, rect) {
+  return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
 }
 
 function drawEgg() {
@@ -343,6 +407,111 @@ function drawStageOne() {
   }
 }
 
+function drawBowlStage() {
+  const bowlStage = state.bowlStage;
+  const bowl = bowlStage.bowl;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 34px "Arial Black", Impact, sans-serif';
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = '#0d7a2c';
+  const message = bowlStage.complete ? 'BOWL READY!' : 'HOLD THE EGG AND DROP IT IN';
+  ctx.strokeText(message, centerX, 90);
+  ctx.fillText(message, centerX, 90);
+  ctx.restore();
+
+  if (emptyBowlImage.complete && !bowlStage.complete) {
+    ctx.drawImage(emptyBowlImage, bowl.x, bowl.y, bowl.width, bowl.height);
+  } else if (filledBowlImage.complete) {
+    ctx.drawImage(filledBowlImage, bowl.x, bowl.y, bowl.width, bowl.height);
+  }
+
+  if (eggCrackFinalImage.complete && !bowlStage.complete) {
+    ctx.drawImage(eggCrackFinalImage, bowlStage.egg.x, bowlStage.egg.y, bowlStage.egg.width, bowlStage.egg.height);
+  }
+
+  if (bowlStage.complete) {
+    const button = state.nextButton;
+    roundedRectPath(button.x, button.y, button.width, button.height, 20);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 26px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NEXT', button.x + button.width / 2, button.y + button.height / 2);
+  }
+}
+
+function drawWhiskStage() {
+  const whiskStage = state.whiskStage;
+  const bowl = whiskStage.bowl;
+  const whisk = whiskStage.whisk;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 32px "Arial Black", Impact, sans-serif';
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = '#0d7a2c';
+  const message = whiskStage.complete ? 'WHISK COMPLETE!' : 'WHISK FOR 3 SECONDS';
+  ctx.strokeText(message, centerX, 90);
+  ctx.fillText(message, centerX, 90);
+  ctx.restore();
+
+  if (bowlTopDownImage.complete) {
+    ctx.drawImage(bowlTopDownImage, bowl.x, bowl.y, bowl.width, bowl.height);
+  }
+
+  if (whiskImage.complete && !whiskStage.complete) {
+    ctx.save();
+    ctx.translate(whisk.x + whisk.width / 2, whisk.y + whisk.height / 2);
+    ctx.rotate(Math.PI / 6);
+    ctx.drawImage(whiskImage, -whisk.width / 2, -whisk.height / 2, whisk.width, whisk.height);
+    ctx.restore();
+  }
+
+  const barX = 140;
+  const barY = 760;
+  const barWidth = 1120;
+  const barHeight = 28;
+  const fillWidth = (whiskStage.progress / whiskStage.requiredProgress) * barWidth;
+
+  ctx.fillStyle = '#ffffff';
+  roundedRectPath(barX, barY, barWidth, barHeight, 14);
+  ctx.fill();
+
+  ctx.fillStyle = '#2adf5d';
+  roundedRectPath(barX, barY, fillWidth, barHeight, 14);
+  ctx.fill();
+
+  if (whiskStage.complete) {
+    const button = state.nextButton;
+    roundedRectPath(button.x, button.y, button.width, button.height, 20);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 26px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NEXT', button.x + button.width / 2, button.y + button.height / 2);
+  }
+}
+
 function drawBackground() {
   ctx.clearRect(0, 0, W, H);
 
@@ -370,6 +539,16 @@ function drawHUD() {
 
   if (state.screen === 'eggStage') {
     drawEggStage();
+    return;
+  }
+
+  if (state.screen === 'bowlStage') {
+    drawBowlStage();
+    return;
+  }
+
+  if (state.screen === 'whiskStage') {
+    drawWhiskStage();
     return;
   }
 
@@ -429,6 +608,26 @@ function startEggStage() {
   state.egg.cracked = false;
 }
 
+function startBowlStage() {
+  state.screen = 'bowlStage';
+  state.bowlStage.complete = false;
+  state.bowlStage.egg.x = 260;
+  state.bowlStage.egg.y = 220;
+  state.bowlStage.egg.dragging = false;
+}
+
+function startWhiskStage() {
+  state.screen = 'whiskStage';
+  state.whiskStage.progress = 0;
+  state.whiskStage.complete = false;
+  state.whiskStage.whisk.x = 120;
+  state.whiskStage.whisk.y = 300;
+  state.whiskStage.whisk.dragging = false;
+  state.whiskStage.whisk.lastX = state.whiskStage.whisk.x;
+  state.whiskStage.whisk.lastY = state.whiskStage.whisk.y;
+  state.whiskStage.whisk.lastAngle = 0;
+}
+
 canvas.addEventListener('pointerdown', (event) => {
   const pointer = getPointerPosition(event);
 
@@ -444,7 +643,7 @@ canvas.addEventListener('pointerdown', (event) => {
   if (state.screen === 'eggStage') {
     if (state.egg.cracked && isInsideNextButton(pointer.x, pointer.y)) {
       playUIClickSound();
-      state.screen = 'next';
+      startBowlStage();
       return;
     }
 
@@ -455,6 +654,50 @@ canvas.addEventListener('pointerdown', (event) => {
         eggCrackSound.currentTime = 0;
         eggCrackSound.play().catch(() => {});
         playStageCompleteSound();
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'bowlStage') {
+    if (state.bowlStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
+      playUIClickSound();
+      startWhiskStage();
+      return;
+    }
+
+    const egg = state.bowlStage.egg;
+    if (isInsideRect(pointer.x, pointer.y, egg)) {
+      egg.dragging = true;
+      egg.offsetX = pointer.x - egg.x;
+      egg.offsetY = pointer.y - egg.y;
+      if (event.pointerId !== undefined && canvas.setPointerCapture) {
+        canvas.setPointerCapture(event.pointerId);
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'whiskStage') {
+    if (state.whiskStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
+      playUIClickSound();
+      state.screen = 'title';
+      return;
+    }
+
+    const whisk = state.whiskStage.whisk;
+    if (isInsideRect(pointer.x, pointer.y, whisk)) {
+      whisk.dragging = true;
+      whisk.offsetX = pointer.x - whisk.x;
+      whisk.offsetY = pointer.y - whisk.y;
+      whisk.lastX = pointer.x;
+      whisk.lastY = pointer.y;
+      const bowl = state.whiskStage.bowl;
+      const bowlCenterX = bowl.x + bowl.width / 2;
+      const bowlCenterY = bowl.y + bowl.height / 2;
+      whisk.lastAngle = Math.atan2(pointer.y - bowlCenterY, pointer.x - bowlCenterX);
+      if (event.pointerId !== undefined && canvas.setPointerCapture) {
+        canvas.setPointerCapture(event.pointerId);
       }
     }
     return;
@@ -480,45 +723,134 @@ canvas.addEventListener('pointerdown', (event) => {
 });
 
 canvas.addEventListener('pointermove', (event) => {
-  if (state.screen !== 'peelStage' || !state.banana.dragging) return;
-  if (state.banana.peelHoldTimer > 0 || state.banana.finishedPeel) return;
-
   const pointer = getPointerPosition(event);
-  const deltaY = pointer.y - state.banana.dragStartY;
 
-  if (deltaY > 0) {
-    state.banana.peelProgress = clamp(deltaY / 240, 0, 1);
+  if (state.screen === 'peelStage') {
+    if (!state.banana.dragging) return;
+    if (state.banana.peelHoldTimer > 0 || state.banana.finishedPeel) return;
+
+    const deltaY = pointer.y - state.banana.dragStartY;
+
+    if (deltaY > 0) {
+      state.banana.peelProgress = clamp(deltaY / 240, 0, 1);
+    }
+
+    if (state.banana.peelProgress >= 1) {
+      state.banana.peelPasses += 1;
+      state.banana.peelProgress = 0;
+      state.banana.dragging = false;
+      state.banana.peelHoldTimer = state.banana.peelHoldDuration;
+      state.banana.peeled = true;
+      playMonkeySound();
+      playPeelPingSound();
+
+      if (state.banana.peelPasses >= state.banana.peelPassesNeeded) {
+        state.banana.finishedPeel = true;
+        playStageCompleteSound();
+      }
+    }
+    return;
   }
 
-  if (state.banana.peelProgress >= 1) {
-    state.banana.peelPasses += 1;
-    state.banana.peelProgress = 0;
-    state.banana.dragging = false;
-    state.banana.peelHoldTimer = state.banana.peelHoldDuration;
-    state.banana.peeled = true;
-    playMonkeySound();
-    playPeelPingSound();
+  if (state.screen === 'bowlStage') {
+    const egg = state.bowlStage.egg;
+    if (!egg.dragging) return;
 
-    if (state.banana.peelPasses >= state.banana.peelPassesNeeded) {
-      state.banana.finishedPeel = true;
+    egg.x = clamp(pointer.x - egg.offsetX, 40, W - egg.width - 40);
+    egg.y = clamp(pointer.y - egg.offsetY, 60, H - egg.height - 40);
+    return;
+  }
+
+  if (state.screen === 'whiskStage') {
+    const whisk = state.whiskStage.whisk;
+    if (!whisk.dragging) return;
+
+    whisk.x = clamp(pointer.x - whisk.offsetX, 20, W - whisk.width - 20);
+    whisk.y = clamp(pointer.y - whisk.offsetY, 80, H - whisk.height - 60);
+
+    const bowl = state.whiskStage.bowl;
+    const whiskCenterX = whisk.x + whisk.width / 2;
+    const whiskCenterY = whisk.y + whisk.height / 2;
+    const bowlCenterX = bowl.x + bowl.width / 2;
+    const bowlCenterY = bowl.y + bowl.height / 2;
+    const offsetX = whiskCenterX - bowlCenterX;
+    const offsetY = whiskCenterY - bowlCenterY;
+    const distanceToCenter = Math.hypot(offsetX, offsetY);
+    const insideBowl = distanceToCenter < Math.min(bowl.width, bowl.height) * 0.55;
+
+    if (insideBowl) {
+      const currentAngle = Math.atan2(offsetY, offsetX);
+      const deltaAngle = Math.atan2(Math.sin(currentAngle - whisk.lastAngle), Math.cos(currentAngle - whisk.lastAngle));
+      const movement = Math.hypot(pointer.x - whisk.lastX, pointer.y - whisk.lastY);
+
+      if (Math.abs(deltaAngle) > 0.08 && movement > 3) {
+        const circularVelocity = Math.abs(deltaAngle) * distanceToCenter * 14;
+        state.whiskStage.progress = clamp(state.whiskStage.progress + circularVelocity, 0, state.whiskStage.requiredProgress);
+      }
+
+      whisk.lastAngle = currentAngle;
+    }
+
+    whisk.lastX = pointer.x;
+    whisk.lastY = pointer.y;
+
+    if (state.whiskStage.progress >= state.whiskStage.requiredProgress && !state.whiskStage.complete) {
+      state.whiskStage.complete = true;
       playStageCompleteSound();
     }
   }
 });
 
-window.addEventListener('pointerup', () => {
-  if (state.screen !== 'peelStage') return;
+window.addEventListener('pointerup', (event) => {
+  if (state.screen === 'peelStage') {
+    if (state.banana.peelHoldTimer > 0) {
+      state.banana.dragging = false;
+      return;
+    }
 
-  if (state.banana.peelHoldTimer > 0) {
+    if (!state.banana.finishedPeel) {
+      state.banana.peelProgress = 0;
+    }
+
     state.banana.dragging = false;
     return;
   }
 
-  if (!state.banana.finishedPeel) {
-    state.banana.peelProgress = 0;
+  if (state.screen === 'bowlStage') {
+    const egg = state.bowlStage.egg;
+    const bowl = state.bowlStage.bowl;
+    const eggCenterX = egg.x + egg.width / 2;
+    const eggCenterY = egg.y + egg.height / 2;
+    const bowlCenterX = bowl.x + bowl.width / 2;
+    const bowlCenterY = bowl.y + bowl.height / 2;
+    const insideBowl = Math.abs(eggCenterX - bowlCenterX) < bowl.width * 0.32 && Math.abs(eggCenterY - bowlCenterY) < bowl.height * 0.35;
+
+    if (insideBowl && !state.bowlStage.complete) {
+      state.bowlStage.complete = true;
+      playStageCompleteSound();
+    }
+
+    egg.dragging = false;
+    if (event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // no-op: pointer may already be released
+      }
+    }
+    return;
   }
 
-  state.banana.dragging = false;
+  if (state.screen === 'whiskStage') {
+    state.whiskStage.whisk.dragging = false;
+    if (event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // no-op: pointer may already be released
+      }
+    }
+  }
 });
 
 monkeyImage.onload = drawHUD;
@@ -528,6 +860,10 @@ eggImage.onload = drawHUD;
 eggCrack1Image.onload = drawHUD;
 eggCrack2Image.onload = drawHUD;
 eggCrackFinalImage.onload = drawHUD;
+emptyBowlImage.onload = drawHUD;
+filledBowlImage.onload = drawHUD;
+bowlTopDownImage.onload = drawHUD;
+whiskImage.onload = drawHUD;
 kitchenBackground.onload = drawHUD;
 drawHUD();
 
