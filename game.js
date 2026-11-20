@@ -1502,7 +1502,7 @@ function drawEndingStage() {
   ctx.lineWidth = 10;
   ctx.strokeStyle = 'rgba(255,255,255,0.95)';
   ctx.fillStyle = '#0d7a2c';
-  ctx.strokeText('PANCAKES COMPLETE!', centerX, 100);
-  ctx.fillText('PANCAKES COMPLETE!', centerX, 100);
+  ctx.strokeText('PANCAKES DONE!', centerX, 100);
+  ctx.fillText('PANCAKES DONE!', centerX, 100);
   ctx.restore();
 }
