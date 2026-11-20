@@ -30,6 +30,21 @@ filledBowlImage.src = 'bowl.png';
 const bowlTopDownImage = new Image();
 bowlTopDownImage.src = 'bowl_topdown.png';
 
+const panEmptyImage = new Image();
+panEmptyImage.src = 'pan_empty.png';
+
+const panPancakeImage = new Image();
+panPancakeImage.src = 'pan_pancake.png';
+
+const panPancakeBurntImage = new Image();
+panPancakeBurntImage.src = 'pan_pancake_burnt.png';
+
+const panPancakeCookedImage = new Image();
+panPancakeCookedImage.src = 'pan_pancake_cooked.png';
+
+const fireImage = new Image();
+fireImage.src = 'fire.png';
+
 const whiskImage = new Image();
 whiskImage.src = 'whisk.png';
 
@@ -42,6 +57,7 @@ const eggCrackSound = new Audio('egg_crack.mp3');
 const uiClickSound = new Audio('monkeysound.mp3');
 const stageCompleteSound = new Audio('yaysound.mp3');
 const peelPingSound = new Audio('ping.mp3');
+const sizzlingSound = new Audio('sizzling.mp3');
 gameSong.loop = true;
 gameSong.volume = 0.35;
 monkeySound.volume = 0.6;
@@ -49,6 +65,8 @@ eggCrackSound.volume = 0.8;
 uiClickSound.volume = 0.4;
 stageCompleteSound.volume = 0.8;
 peelPingSound.volume = 0.7;
+sizzlingSound.loop = true;
+sizzlingSound.volume = 0.8;
 
 const W = canvas.width;
 const H = canvas.height;
@@ -139,8 +157,58 @@ const state = {
       lastAngle: 0,
     },
     progress: 0,
-    requiredProgress: 180,
+    requiredProgress: 1500,
     complete: false,
+  },
+  bananaStage: {
+    bowl: {
+      x: centerX - 180,
+      y: 420,
+      width: 360,
+      height: 220,
+    },
+    bananas: [],
+    complete: false,
+    total: 3,
+  },
+  panStage: {
+    bowl: {
+      x: 120,
+      y: 180,
+      width: 290,
+      height: 200,
+      dragging: false,
+      offsetX: 0,
+      offsetY: 0,
+      startX: 120,
+      startY: 180,
+    },
+    pan: {
+      x: centerX - 285,
+      y: 410,
+      width: 570,
+      height: 270,
+    },
+    complete: false,
+  },
+  fryStage: {
+    pan: {
+      x: centerX - 300,
+      y: 250,
+      width: 600,
+      height: 320,
+    },
+    progress: 0,
+    duration: 10,
+    spawnAccumulator: 0,
+    showFireEvery: 0.5,
+    fires: [],
+    missCount: 0,
+    totalSpawns: 20,
+    complete: false,
+    failed: false,
+    soundsStarted: false,
+    nextSpawnId: 0,
   },
 };
 
@@ -512,6 +580,264 @@ function drawWhiskStage() {
   }
 }
 
+function getBananaSpawnPoints() {
+  const bowl = state.bananaStage.bowl;
+  const bowlCenterX = bowl.x + bowl.width / 2;
+  const bowlCenterY = bowl.y + bowl.height / 2;
+  const bananaWidth = 180;
+  const bananaHeight = 110;
+
+  return [
+    { x: 140, y: 120 },
+    { x: W - 140 - bananaWidth, y: 120 },
+    { x: bowlCenterX - bananaWidth / 2, y: 170 },
+  ];
+}
+
+function startBananaStage() {
+  state.screen = 'bananaStage';
+  state.bananaStage.complete = false;
+  state.bananaStage.bananas = getBananaSpawnPoints().map((spawn, index) => ({
+    id: index,
+    x: spawn.x,
+    y: spawn.y,
+    width: 180,
+    height: 110,
+    startX: spawn.x,
+    startY: spawn.y,
+    dragging: false,
+    offsetX: 0,
+    offsetY: 0,
+    placed: false,
+  }));
+}
+
+function drawBananaStage() {
+  const bananaStage = state.bananaStage;
+  const bowl = bananaStage.bowl;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 34px "Arial Black", Impact, sans-serif';
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = '#0d7a2c';
+  const message = bananaStage.complete ? 'BANANAS IN! ' : `DROP ALL 3 BANANAS`;
+  ctx.strokeText(message, centerX, 90);
+  ctx.fillText(message, centerX, 90);
+  ctx.restore();
+
+  if (bowlTopDownImage.complete) {
+    ctx.drawImage(bowlTopDownImage, bowl.x, bowl.y, bowl.width, bowl.height);
+  }
+
+  for (const banana of bananaStage.bananas) {
+    if (banana.placed) continue;
+    if (peeledBananaImage.complete) {
+      ctx.drawImage(peeledBananaImage, banana.x, banana.y, banana.width, banana.height);
+    }
+  }
+
+  if (bananaStage.complete) {
+    const button = state.nextButton;
+    roundedRectPath(button.x, button.y, button.width, button.height, 20);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 26px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NEXT', button.x + button.width / 2, button.y + button.height / 2);
+  }
+}
+
+function startPanStage() {
+  state.screen = 'panStage';
+  state.panStage.complete = false;
+  state.panStage.bowl.x = 120;
+  state.panStage.bowl.y = 180;
+  state.panStage.bowl.dragging = false;
+}
+
+function startFryStage() {
+  state.screen = 'fryStage';
+  state.fryStage.progress = 0;
+  state.fryStage.spawnAccumulator = 0;
+  state.fryStage.fires = [];
+  state.fryStage.missCount = 0;
+  state.fryStage.complete = false;
+  state.fryStage.failed = false;
+  state.fryStage.soundsStarted = false;
+  state.fryStage.nextSpawnId = 0;
+  if (sizzlingSound) {
+    sizzlingSound.pause();
+    sizzlingSound.currentTime = 0;
+  }
+}
+
+function spawnFire() {
+  const fryStage = state.fryStage;
+  if (fryStage.fires.length >= fryStage.totalSpawns) return;
+
+  const pan = fryStage.pan;
+  const margin = 70;
+  const fireWidth = 36 + Math.random() * 22;
+  const fireHeight = fireWidth * 1.15;
+  const x = pan.x + margin + Math.random() * (pan.width - margin * 2 - fireWidth);
+  const y = pan.y + 30 + Math.random() * (pan.height * 0.56 - fireHeight);
+
+  fryStage.fires.push({
+    id: ++fryStage.nextSpawnId,
+    x,
+    y,
+    width: fireWidth,
+    height: fireHeight,
+    bornAt: performance.now(),
+    ttl: 1000,
+    sizePulse: Math.random() * 0.8 + 0.5,
+    caught: false,
+  });
+}
+
+function drawPanStage() {
+  const panStage = state.panStage;
+  const pan = panStage.pan;
+  const bowl = panStage.bowl;
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 34px "Arial Black", Impact, sans-serif';
+  ctx.lineWidth = 7;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillStyle = '#0d7a2c';
+  const message = panStage.complete ? 'PANCAKE READY!' : 'DRAG THE BOWL INTO THE PAN';
+  ctx.strokeText(message, centerX, 90);
+  ctx.fillText(message, centerX, 90);
+  ctx.restore();
+
+  if (panEmptyImage.complete && !panStage.complete) {
+    ctx.drawImage(panEmptyImage, pan.x, pan.y, pan.width, pan.height);
+  }
+
+  if (panPancakeImage.complete && panStage.complete) {
+    ctx.drawImage(panPancakeImage, pan.x, pan.y, pan.width, pan.height);
+  }
+
+  if (!panStage.complete && filledBowlImage.complete) {
+    ctx.drawImage(filledBowlImage, bowl.x, bowl.y, bowl.width, bowl.height);
+  }
+
+  if (panStage.complete) {
+    const button = state.nextButton;
+    roundedRectPath(button.x, button.y, button.width, button.height, 20);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 26px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NEXT', button.x + button.width / 2, button.y + button.height / 2);
+  }
+}
+
+function drawFryStage() {
+  const fryStage = state.fryStage;
+  const pan = fryStage.pan;
+  const barX = 120;
+  const barY = 740;
+  const barWidth = 1040;
+  const barHeight = 26;
+  const fillWidth = (fryStage.progress / fryStage.duration) * barWidth;
+
+  if (panPancakeImage.complete) {
+    ctx.drawImage(panPancakeImage, pan.x, pan.y, pan.width, pan.height);
+  }
+
+  for (const fire of fryStage.fires) {
+    const age = performance.now() - fire.bornAt;
+    const life = clamp(age / fire.ttl, 0, 1);
+    const size = 0.5 + life * 1.4 + fire.sizePulse * 0.2;
+    const alpha = 1 - life;
+    if (alpha <= 0) continue;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(fire.x + fire.width / 2, fire.y + fire.height / 2);
+    ctx.scale(size, size);
+    ctx.drawImage(fireImage, -fire.width / 2, -fire.height / 2, fire.width, fire.height);
+    ctx.restore();
+  }
+
+  ctx.fillStyle = '#ffffff';
+  roundedRectPath(barX, barY, barWidth, barHeight, 14);
+  ctx.fill();
+
+  ctx.fillStyle = '#2adf5d';
+  roundedRectPath(barX, barY, fillWidth, barHeight, 14);
+  ctx.fill();
+
+  if (fryStage.failed) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.82)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    if (panPancakeBurntImage.complete) {
+      ctx.drawImage(panPancakeBurntImage, pan.x, pan.y, pan.width, pan.height);
+    }
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ff2a2a';
+    ctx.font = 'bold 62px "Arial Black", Impact, sans-serif';
+    ctx.fillText('YOU FAILED', centerX, 220);
+    ctx.restore();
+
+    const button = state.nextButton;
+    const retryX = centerX - 150;
+    const retryY = 620;
+    roundedRectPath(retryX, retryY, 300, 90, 24);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 28px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('TRY AGAIN', centerX, retryY + 45);
+    return;
+  }
+
+  if (fryStage.complete && !fryStage.failed) {
+    const button = state.nextButton;
+    roundedRectPath(button.x, button.y, button.width, button.height, 20);
+    ctx.fillStyle = '#1eea45';
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#2b2bf0';
+    ctx.stroke();
+    ctx.fillStyle = '#111111';
+    ctx.font = 'bold 26px "Comic Sans MS", cursive';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('NEXT', button.x + button.width / 2, button.y + button.height / 2);
+  }
+}
+
 function drawBackground() {
   ctx.clearRect(0, 0, W, H);
 
@@ -549,6 +875,21 @@ function drawHUD() {
 
   if (state.screen === 'whiskStage') {
     drawWhiskStage();
+    return;
+  }
+
+  if (state.screen === 'bananaStage') {
+    drawBananaStage();
+    return;
+  }
+
+  if (state.screen === 'panStage') {
+    drawPanStage();
+    return;
+  }
+
+  if (state.screen === 'fryStage') {
+    drawFryStage();
     return;
   }
 
@@ -681,7 +1022,7 @@ canvas.addEventListener('pointerdown', (event) => {
   if (state.screen === 'whiskStage') {
     if (state.whiskStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
       playUIClickSound();
-      state.screen = 'title';
+      startBananaStage();
       return;
     }
 
@@ -698,6 +1039,76 @@ canvas.addEventListener('pointerdown', (event) => {
       whisk.lastAngle = Math.atan2(pointer.y - bowlCenterY, pointer.x - bowlCenterX);
       if (event.pointerId !== undefined && canvas.setPointerCapture) {
         canvas.setPointerCapture(event.pointerId);
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'bananaStage') {
+    if (state.bananaStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
+      playUIClickSound();
+      startPanStage();
+      return;
+    }
+
+    const activeBanana = state.bananaStage.bananas.find((banana) => !banana.placed);
+    if (!activeBanana) return;
+
+    if (isInsideRect(pointer.x, pointer.y, activeBanana)) {
+      activeBanana.dragging = true;
+      activeBanana.offsetX = pointer.x - activeBanana.x;
+      activeBanana.offsetY = pointer.y - activeBanana.y;
+      if (event.pointerId !== undefined && canvas.setPointerCapture) {
+        canvas.setPointerCapture(event.pointerId);
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'panStage') {
+    if (state.panStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
+      playUIClickSound();
+      startFryStage();
+      return;
+    }
+
+    const bowl = state.panStage.bowl;
+    if (isInsideRect(pointer.x, pointer.y, bowl)) {
+      bowl.dragging = true;
+      bowl.offsetX = pointer.x - bowl.x;
+      bowl.offsetY = pointer.y - bowl.y;
+      if (event.pointerId !== undefined && canvas.setPointerCapture) {
+        canvas.setPointerCapture(event.pointerId);
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'fryStage') {
+    if (state.fryStage.failed) {
+      const retryX = centerX - 150;
+      const retryY = 620;
+      const retryButton = { x: retryX, y: retryY, width: 300, height: 90 };
+      if (pointer.x >= retryButton.x && pointer.x <= retryButton.x + retryButton.width && pointer.y >= retryButton.y && pointer.y <= retryButton.y + retryButton.height) {
+        playUIClickSound();
+        startPeelStage();
+      }
+      return;
+    }
+
+    if (state.fryStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
+      playUIClickSound();
+      state.screen = 'title';
+      return;
+    }
+
+    const fires = [...state.fryStage.fires];
+    for (let i = fires.length - 1; i >= 0; i -= 1) {
+      const fire = fires[i];
+      if (pointer.x >= fire.x && pointer.x <= fire.x + fire.width && pointer.y >= fire.y && pointer.y <= fire.y + fire.height) {
+        playPeelPingSound();
+        state.fryStage.fires = state.fryStage.fires.filter((item) => item.id !== fire.id);
+        return;
       }
     }
     return;
@@ -783,9 +1194,10 @@ canvas.addEventListener('pointermove', (event) => {
       const deltaAngle = Math.atan2(Math.sin(currentAngle - whisk.lastAngle), Math.cos(currentAngle - whisk.lastAngle));
       const movement = Math.hypot(pointer.x - whisk.lastX, pointer.y - whisk.lastY);
 
-      if (Math.abs(deltaAngle) > 0.08 && movement > 3) {
-        const circularVelocity = Math.abs(deltaAngle) * distanceToCenter * 14;
-        state.whiskStage.progress = clamp(state.whiskStage.progress + circularVelocity, 0, state.whiskStage.requiredProgress);
+      if (movement > 6) {
+        const degrees = Math.abs(deltaAngle) * (180 / Math.PI);
+        const circularGain = Math.max(0, degrees - 12) * 0.45;
+        state.whiskStage.progress = clamp(state.whiskStage.progress + circularGain, 0, state.whiskStage.requiredProgress);
       }
 
       whisk.lastAngle = currentAngle;
@@ -798,6 +1210,24 @@ canvas.addEventListener('pointermove', (event) => {
       state.whiskStage.complete = true;
       playStageCompleteSound();
     }
+    return;
+  }
+
+  if (state.screen === 'bananaStage') {
+    const activeBanana = state.bananaStage.bananas.find((banana) => banana.dragging && !banana.placed);
+    if (!activeBanana) return;
+
+    activeBanana.x = clamp(pointer.x - activeBanana.offsetX, 30, W - activeBanana.width - 30);
+    activeBanana.y = clamp(pointer.y - activeBanana.offsetY, 80, H - activeBanana.height - 20);
+    return;
+  }
+
+  if (state.screen === 'panStage') {
+    const bowl = state.panStage.bowl;
+    if (!bowl.dragging) return;
+
+    bowl.x = clamp(pointer.x - bowl.offsetX, 30, W - bowl.width - 30);
+    bowl.y = clamp(pointer.y - bowl.offsetY, 80, H - bowl.height - 40);
   }
 });
 
@@ -850,6 +1280,80 @@ window.addEventListener('pointerup', (event) => {
         // no-op: pointer may already be released
       }
     }
+    return;
+  }
+
+  if (state.screen === 'bananaStage') {
+    const bowl = state.bananaStage.bowl;
+    const activeBanana = state.bananaStage.bananas.find((banana) => banana.dragging && !banana.placed);
+    if (!activeBanana) {
+      return;
+    }
+
+    const bananaCenterX = activeBanana.x + activeBanana.width / 2;
+    const bananaCenterY = activeBanana.y + activeBanana.height / 2;
+    const bowlCenterX = bowl.x + bowl.width / 2;
+    const bowlCenterY = bowl.y + bowl.height / 2;
+    const insideBowl = Math.abs(bananaCenterX - bowlCenterX) < bowl.width * 0.38 && Math.abs(bananaCenterY - bowlCenterY) < bowl.height * 0.42;
+
+    if (insideBowl) {
+      activeBanana.placed = true;
+      activeBanana.dragging = false;
+      playPeelPingSound();
+
+      const placedCount = state.bananaStage.bananas.filter((banana) => banana.placed).length;
+      if (placedCount >= state.bananaStage.total) {
+        state.bananaStage.complete = true;
+        playStageCompleteSound();
+      }
+    } else {
+      activeBanana.x = activeBanana.startX;
+      activeBanana.y = activeBanana.startY;
+      activeBanana.dragging = false;
+    }
+
+    if (event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // no-op: pointer may already be released
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'panStage') {
+    const bowl = state.panStage.bowl;
+    const pan = state.panStage.pan;
+    const bowlCenterX = bowl.x + bowl.width / 2;
+    const bowlCenterY = bowl.y + bowl.height / 2;
+    const panCenterX = pan.x + pan.width / 2;
+    const panCenterY = pan.y + pan.height / 2;
+    const insidePan = Math.abs(bowlCenterX - panCenterX) < pan.width * 0.28 && Math.abs(bowlCenterY - panCenterY) < pan.height * 0.32;
+
+    if (insidePan && !state.panStage.complete) {
+      state.panStage.complete = true;
+      playStageCompleteSound();
+    } else {
+      bowl.x = bowl.startX;
+      bowl.y = bowl.startY;
+    }
+
+    bowl.dragging = false;
+    if (event.pointerId !== undefined && canvas.releasePointerCapture) {
+      try {
+        canvas.releasePointerCapture(event.pointerId);
+      } catch (error) {
+        // no-op: pointer may already be released
+      }
+    }
+    return;
+  }
+
+  if (state.screen === 'fryStage') {
+    if (state.fryStage.failed || state.fryStage.complete) {
+      return;
+    }
   }
 });
 
@@ -863,6 +1367,11 @@ eggCrackFinalImage.onload = drawHUD;
 emptyBowlImage.onload = drawHUD;
 filledBowlImage.onload = drawHUD;
 bowlTopDownImage.onload = drawHUD;
+panEmptyImage.onload = drawHUD;
+panPancakeImage.onload = drawHUD;
+panPancakeBurntImage.onload = drawHUD;
+panPancakeCookedImage.onload = drawHUD;
+fireImage.onload = drawHUD;
 whiskImage.onload = drawHUD;
 kitchenBackground.onload = drawHUD;
 drawHUD();
@@ -875,6 +1384,50 @@ function gameLoop() {
 
     if (banana.peelHoldTimer === 0) {
       banana.peeled = banana.finishedPeel;
+    }
+  }
+
+  if (state.screen === 'fryStage') {
+    const fryStage = state.fryStage;
+    if (!fryStage.complete && !fryStage.failed) {
+      if (!fryStage.soundsStarted) {
+        fryStage.soundsStarted = true;
+        sizzlingSound.currentTime = 0;
+        sizzlingSound.play().catch(() => {});
+      }
+
+      fryStage.progress += 0.0167;
+      fryStage.spawnAccumulator += 16.7;
+
+      if (fryStage.spawnAccumulator >= fryStage.showFireEvery * 1000 && fryStage.fires.length < fryStage.totalSpawns) {
+        fryStage.spawnAccumulator = 0;
+        spawnFire();
+      }
+
+      const now = performance.now();
+      for (let i = fryStage.fires.length - 1; i >= 0; i--) {
+        const fire = fryStage.fires[i];
+        const age = now - fire.bornAt;
+        if (age >= fire.ttl) {
+          fryStage.fires.splice(i, 1);
+          fryStage.missCount += 1;
+        }
+      }
+
+      if (fryStage.progress >= fryStage.duration) {
+        fryStage.complete = true;
+        sizzlingSound.pause();
+        sizzlingSound.currentTime = 0;
+
+        if (fryStage.missCount > 10) {
+          fryStage.failed = true;
+          if (panPancakeBurntImage.complete) {
+            // burnt display is handled in drawFryStage
+          }
+        } else {
+          playStageCompleteSound();
+        }
+      }
     }
   }
 
