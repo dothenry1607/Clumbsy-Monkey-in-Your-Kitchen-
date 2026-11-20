@@ -51,6 +51,15 @@ whiskImage.src = 'whisk.png';
 const kitchenBackground = new Image();
 kitchenBackground.src = 'kitchen.jpg';
 
+const monkeyParty1Image = new Image();
+monkeyParty1Image.src = 'monkey_party1.png';
+
+const monkeyParty2Image = new Image();
+monkeyParty2Image.src = 'monkey_party2.png';
+
+const pancakesImage = new Image();
+pancakesImage.src = 'pancakes.png';
+
 const gameSong = new Audio('gamesong.mp3');
 const monkeySound = new Audio('monkeysound.mp3');
 const eggCrackSound = new Audio('egg_crack.mp3');
@@ -209,6 +218,9 @@ const state = {
     failed: false,
     soundsStarted: false,
     nextSpawnId: 0,
+  },
+  endingState: {
+    soundsPlayed: false,
   },
 };
 
@@ -893,6 +905,11 @@ function drawHUD() {
     return;
   }
 
+  if (state.screen === 'endingStage') {
+    drawEndingStage();
+    return;
+  }
+
   drawStageOne();
 }
 
@@ -1098,7 +1115,8 @@ canvas.addEventListener('pointerdown', (event) => {
 
     if (state.fryStage.complete && isInsideNextButton(pointer.x, pointer.y)) {
       playUIClickSound();
-      state.screen = 'title';
+      state.screen = 'endingStage';
+      state.endingState.soundsPlayed = false;
       return;
     }
 
@@ -1374,6 +1392,9 @@ panPancakeCookedImage.onload = drawHUD;
 fireImage.onload = drawHUD;
 whiskImage.onload = drawHUD;
 kitchenBackground.onload = drawHUD;
+monkeyParty1Image.onload = drawHUD;
+monkeyParty2Image.onload = drawHUD;
+pancakesImage.onload = drawHUD;
 drawHUD();
 
 function gameLoop() {
@@ -1431,8 +1452,57 @@ function gameLoop() {
     }
   }
 
+  if (state.screen === 'endingStage' && !state.endingState.soundsPlayed) {
+    state.endingState.soundsPlayed = true;
+    playMonkeySound();
+    playStageCompleteSound();
+  }
+
   drawHUD();
   requestAnimationFrame(gameLoop);
 }
 
 requestAnimationFrame(gameLoop);
+
+function drawEndingStage() {
+  ctx.fillStyle = '#efefef';
+  ctx.fillRect(0, 0, W, H);
+
+  if (kitchenBackground.complete) {
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.drawImage(kitchenBackground, 0, 0, W, H);
+    ctx.restore();
+  }
+
+  const partyFrame = Math.floor(performance.now() / 350) % 2 === 0
+    ? monkeyParty1Image
+    : monkeyParty2Image;
+
+  if (partyFrame.complete) {
+    ctx.drawImage(partyFrame, 0, 250, 390, 520);
+  }
+
+  if (pancakesImage.complete) {
+    const pancakesWidth = 760;
+    const pancakesHeight = 520;
+    ctx.drawImage(
+      pancakesImage,
+      centerX - pancakesWidth / 2,
+      170,
+      pancakesWidth,
+      pancakesHeight,
+    );
+  }
+
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold 64px "Arial Black", Impact, sans-serif';
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillStyle = '#0d7a2c';
+  ctx.strokeText('PANCAKES COMPLETE!', centerX, 100);
+  ctx.fillText('PANCAKES COMPLETE!', centerX, 100);
+  ctx.restore();
+}
